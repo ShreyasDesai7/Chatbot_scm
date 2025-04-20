@@ -1,23 +1,14 @@
 from dotenv import load_dotenv
-load_dotenv() ## loading all the environment variables
-
 import streamlit as st
 import os
 import google.generativeai as genai
-from dotenv import load_dotenv
-import pandas as pd
-import numpy as np
 
-# Page configuration
+# Keep only one page config at the start
 st.set_page_config(
-    page_title="Indian Healthcare Supply Chain Assistant",
+    page_title="Indian Healthcare Supply Chain Management Assistant",
     page_icon="🏥",
     layout="wide"
 )
-
-from dotenv import load_dotenv
-import os
-import google.generativeai as genai
 
 load_dotenv()
 
@@ -28,34 +19,23 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# Initialize Gemini model
-model = genai.GenerativeModel('gemini-2.0-flash')
-
-# System prompt to specialize the chatbot
-SYSTEM_PROMPT = """You are a specialized healthcare supply chain management assistant for the Indian healthcare system. 
-Your primary functions include:
-1. Analyzing state-wise population data for budget allocation
-2. Providing insights on healthcare resource distribution
-3. Suggesting optimal supply chain strategies
-4. Monitoring healthcare inventory requirements
-5. Recommending budget allocation based on population density and healthcare needs
-
-Please provide detailed, data-driven responses focusing on:
-- Population-based resource allocation
-- State-wise budget distribution
-- Supply chain optimization
-- Healthcare infrastructure requirements
-- Inventory management solutions
-"""
-
+# Update to use Gemini 2.0 Flash model
+model = genai.GenerativeModel('models/gemini-2.0-flash')
 chat = model.start_chat(history=[])
-chat.send_message(SYSTEM_PROMPT)
 
-# Initialize session state
+# Simplify the get_gemini_response function
+def get_gemini_response(question):
+    # Remove healthcare context from the actual query
+    response = chat.send_message(question, stream=True)
+    return response
+
+# Initialize session state for chat history
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
 
-# UI Elements
+# Update page configuration
+# Remove the duplicate set_page_config() from here
+# Continue with the rest of your UI elements
 st.title("🏥 Indian Healthcare Supply Chain Management Assistant")
 st.markdown("""
 ### Features:
@@ -74,70 +54,20 @@ with st.sidebar:
     )
     
     st.subheader("State-wise Population Data")
-    # Complete list of Indian states and Union Territories
     indian_states = [
-        # States (28)
-        "Andhra Pradesh",
-        "Arunachal Pradesh",
-        "Assam",
-        "Bihar",
-        "Chhattisgarh",
-        "Goa",
-        "Gujarat",
-        "Haryana",
-        "Himachal Pradesh",
-        "Jharkhand",
-        "Karnataka",
-        "Kerala",
-        "Madhya Pradesh",
-        "Maharashtra",
-        "Manipur",
-        "Meghalaya",
-        "Mizoram",
-        "Nagaland",
-        "Odisha",
-        "Punjab",
-        "Rajasthan",
-        "Sikkim",
-        "Tamil Nadu",
-        "Telangana",
-        "Tripura",
-        "Uttar Pradesh",
-        "Uttarakhand",
-        "West Bengal",
-        # Union Territories (8)
-        "Andaman and Nicobar Islands",
-        "Chandigarh",
-        "Dadra and Nagar Haveli and Daman and Diu",
-        "Delhi",
-        "Jammu and Kashmir",
-        "Ladakh",
-        "Lakshadweep",
-        "Puducherry"
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+        "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+        "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+        "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+        "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+        "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
     ]
     selected_state = st.selectbox("Select State/UT", indian_states)
 
-def get_gemini_response(question):
-    # Enhance the prompt with healthcare context
-    enhanced_question = f"""Context: Indian Healthcare Supply Chain Management
-State: {selected_state}
-Analysis Type: {analysis_type}
-
-Question: {question}
-
-Please provide specific recommendations considering:
-1. Population-based resource allocation
-2. Geographic distribution
-3. Healthcare infrastructure needs
-4. Supply chain optimization
-5. Budget allocation metrics"""
-    
-    response = chat.send_message(enhanced_question, stream=True)
-    return response
-
 # Main chat interface
 st.header("💬 Chat Interface")
-input_text = st.text_input("Ask your healthcare supply chain question:", key="input")
+input_text = st.text_input("Ask your question:", key="input")
 submit = st.button("Submit Question")
 
 if submit and input_text:
